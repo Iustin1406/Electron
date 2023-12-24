@@ -10,21 +10,29 @@
 #define FUNDAL 0
 using namespace std;
 
-char butoane[5][10], mesaj[30]="  INFO";
+char butoane[7][10], mesaj[30]=" INFO";
 void adaugareButoane()
 {
     strcpy(butoane[0],"DELETE");
     strcpy(butoane[1],"  EDIT");
     strcpy(butoane[2],"ROTATE");
-    strcpy(butoane[3],"  INFO");
+    strcpy(butoane[3]," INFO");
+    strcpy(butoane[4],"ZOOM");
+
     for(int i=0; i<4; ++i)
     {
-        rectangle(i*350,HEIGHT-101,(i+1)*350-1,HEIGHT-1);
-        outtextxy(i*350+100,HEIGHT-60,butoane[i]);
+        rectangle(i*250,HEIGHT-101,(i+1)*250,HEIGHT-1);
+        outtextxy(i*250+50,HEIGHT-60,butoane[i]);
     }
+    rectangle(1000,HEIGHT-101,1200,HEIGHT-1);
+    outtextxy(1050,HEIGHT-80,butoane[4]);
+    outtextxy(1070,HEIGHT-40,"IN");
+    rectangle(1200,HEIGHT-101,1399,HEIGHT-1);
+    outtextxy(1250,HEIGHT-80,butoane[4]);
+    outtextxy(1270,HEIGHT-40,"OUT");
 }
 
-float zoom=10.0;
+//float zoom=10.0;
 
 struct descriere
 {
@@ -36,10 +44,11 @@ struct descriere
 struct punctLegatura
 {
     float x, y;
+    float x1, y1;
     unsigned cateLeg=0;
-    struct{
+    /*struct{
         unsigned bloc, nod;
-    }leg[10];
+    }leg[10];*/
 };
 
 void roteste (float x, float y, float & xnou, float & ynou)
@@ -52,6 +61,7 @@ struct piesa
 {
     unsigned id;
     char nume[MAX1];
+    float zoom=10;
     int x,y;              ///patratul din jur de latura 120: (P.x-60,P.y-60), (P.x+60, P.y+60)
     unsigned orientare;
     char continut[MAX2];
@@ -66,10 +76,7 @@ struct piesa
 
 struct legatura
 {
-    struct
-    {
-        unsigned bloc1, bloc2, nod1, nod2;
-    } bloc;
+    unsigned bloc1, bloc2, nod1, nod2;
     unsigned varianta;
 };
 legatura Legatura[MAX2];
@@ -92,7 +99,7 @@ void initializeaza(piesa& P)
     /*printf("%d\n",P.nrLegaturi); */
     for (unsigned i=1; i<=P.nrLegaturi; i++)
     {
-        fscanf(f,"%f%f",&P.pLeg[i].x,&P.pLeg[i].y);
+        fscanf(f,"%f%f",&P.pLeg[i].x1,&P.pLeg[i].y1);
         //printf("%f %f\n",P.pLeg[i].x,P.pLeg[i].y);
     }
     fscanf(f,"%s",P.unitate);
@@ -150,7 +157,7 @@ void myLine(piesa P, unsigned i)
         roteste(x2,y2,x_2,y_2);
         break;
     }
-    line(P.x+zoom*x_1,P.y+zoom*y_1,P.x+zoom*x_2,P.y+zoom*y_2); ///P.x=cursor, x_1 din fisier
+    line(P.x+P.zoom*x_1,P.y+P.zoom*y_1,P.x+P.zoom*x_2,P.y+P.zoom*y_2); ///P.x=cursor, x_1 din fisier
 }
 
 void myRectangle(piesa P, unsigned i)
@@ -192,7 +199,7 @@ void myRectangle(piesa P, unsigned i)
         roteste(x2,y2,x_2,y_2);
         break;
     }
-    rectangle(P.x+zoom*x_1,P.y+zoom*y_1,P.x+zoom*x_2,P.y+zoom*y_2);
+    rectangle(P.x+P.zoom*x_1,P.y+P.zoom*y_1,P.x+P.zoom*x_2,P.y+P.zoom*y_2);
 }
 
 void myEllipse(piesa P, unsigned i)
@@ -232,7 +239,7 @@ void myEllipse(piesa P, unsigned i)
         y_2=x2;
         break;
     }
-    ellipse(P.x+x_1*zoom,P.y+y_1*zoom,0,360,x_2*zoom,y_2*zoom);
+    ellipse(P.x+x_1*P.zoom,P.y+y_1*P.zoom,0,360,x_2*P.zoom,y_2*P.zoom);
 }
 
 void myArc(piesa P, unsigned i)
@@ -245,22 +252,22 @@ void myArc(piesa P, unsigned i)
     switch (P.orientare)
     {
     case 0:
-        arc(P.x+x1*zoom,P.y+y1*zoom,-90,90,x2*zoom);
+        arc(P.x+x1*P.zoom,P.y+y1*P.zoom,-90,90,x2*P.zoom);
         break;
     case 1:
         roteste(x1,y1,x_1,y_1);
-        arc(P.x+x_1*zoom,P.y+y_1*zoom,0,180,x2*zoom);
+        arc(P.x+x_1*P.zoom,P.y+y_1*P.zoom,0,180,x2*P.zoom);
         break;
     case 2:
         roteste(x1,y1,x_1,y_1);
         roteste(x_1,y_1,x1,y1);
-        arc(P.x+x1*zoom,P.y+y1*zoom,90,270,x2*zoom);
+        arc(P.x+x1*P.zoom,P.y+y1*P.zoom,90,270,x2*P.zoom);
         break;
     case 3:
         roteste(x1,y1,x_1,y_1);
         roteste(x_1,y_1,x1,y1);
         roteste(x1,y1,x_1,y_1);
-        arc(P.x+x_1*zoom,P.y+y_1*zoom,-180,0,x2*zoom);
+        arc(P.x+x_1*P.zoom,P.y+y_1*P.zoom,-180,0,x2*P.zoom);
         break;
     }
 }
@@ -295,8 +302,8 @@ void amplaseaza(piesa& P, unsigned x, unsigned y, unsigned orient, unsigned a)
         for(int j=1; j<=P.nrLegaturi; j++)
         {
             //cout<<'a';
-            P.pLeg[j].x=P.x+zoom*P.pLeg[j].x;
-            P.pLeg[j].y=P.y-zoom*P.pLeg[j].y;
+            P.pLeg[j].x=P.x+P.zoom*P.pLeg[j].x1;
+            P.pLeg[j].y=P.y-P.zoom*P.pLeg[j].y1;
         }
     P.orientare=orient;
     deseneaza(P, WHITE);
@@ -307,6 +314,15 @@ void roteste(piesa& P)
     deseneaza(P,FUNDAL);
     P.orientare=(P.orientare+1) % 4;
     deseneaza(P, WHITE);
+    for(int i=1;i<=P.nrLegaturi;i++)
+    {
+        int k=P.pLeg[i].x1;
+        P.pLeg[i].x1=-P.pLeg[i].y1;
+        P.pLeg[i].y1=k;
+        P.pLeg[i].x=P.x+P.zoom*P.pLeg[i].x1;
+        P.pLeg[i].y=P.y-P.zoom*P.pLeg[i].y1;
+    }
+
 }
 void drawLine(float x1, float y1, float x2, float y2, int cul)
 {
@@ -412,18 +428,22 @@ void deseneazaLegatura(piesa P[MAX2],int &idNod1, int &p1, int &idNod2, int &p2,
     if(!clickGol)
     {
         //cout<<"da";
-        drawLine(x1,y1,x2,y2, RED);
+        drawLine(x1,y1,x2,y2, 15-FUNDAL);
         for(i=1; i<=nrLegaturi; i++)
-            drawLine(P[Legatura[i].bloc.bloc1].pLeg[Legatura[i].bloc.nod1].x,P[Legatura[i].bloc.bloc1].pLeg[Legatura[i].bloc.nod1].y,P[Legatura[i].bloc.bloc2].pLeg[Legatura[i].bloc.nod2].x,P[Legatura[i].bloc.bloc2].pLeg[Legatura[i].bloc.nod2].y,RED);
+            drawLine(P[Legatura[i].bloc1].pLeg[Legatura[i].nod1].x,P[Legatura[i].bloc1].pLeg[Legatura[i].nod1].y,P[Legatura[i].bloc2].pLeg[Legatura[i].nod2].x,P[Legatura[i].bloc2].pLeg[Legatura[i].nod2].y,15-FUNDAL);
         nrLegaturi++;
-        Legatura[nrLegaturi].bloc.bloc1=idNod1;
-        Legatura[nrLegaturi].bloc.bloc2=idNod2;
-        Legatura[nrLegaturi].bloc.nod1=p1;
-        Legatura[nrLegaturi].bloc.nod2=p2;
+        Legatura[nrLegaturi].bloc1=idNod1;
+        Legatura[nrLegaturi].bloc2=idNod2;
+        Legatura[nrLegaturi].nod1=p1;
+        Legatura[nrLegaturi].nod2=p2;
         P[idNod2].pLeg[p2].cateLeg++;
-        P[idNod2].pLeg[p2].leg[P[idNod2].pLeg[p2].cateLeg].bloc=idNod1;
+        /*P[idNod2].pLeg[p2].leg[P[idNod2].pLeg[p2].cateLeg].bloc=idNod1;
         P[idNod2].pLeg[p2].leg[P[idNod2].pLeg[p2].cateLeg].nod=p1;
         P[idNod1].pLeg[p1].leg[P[idNod1].pLeg[p1].cateLeg].bloc=idNod2;
+        */
+        /*for(i=1;i<=nrLegaturi;i++)
+            cout<<Legatura[i].bloc1<<'-'<<Legatura[i].bloc2<<' ';
+        cout<<endl;*/
     }
 
 }
@@ -471,7 +491,6 @@ unsigned alegePiesa(piesa vectorPiese[MAX2], unsigned nrPiese)
         return 0;
     }
 }
-
 
 unsigned alegeOPiesaDinMeniu(piesa Meniu[MAX2],unsigned nrPieseMeniu)
 {
@@ -544,12 +563,12 @@ void newWindow(piesa& P,int mainWindow)
 void valoarePiesa(piesa& P,char mesaj[])
 {
     setcolor(FUNDAL);
-    outtextxy(1150,HEIGHT-60,mesaj);
+    outtextxy(800,HEIGHT-60,mesaj);
     setcolor(WHITE);
     strcpy(mesaj,P.valoare);
     strcat(mesaj, " ");
     strcat(mesaj,P.unitate);
-    outtextxy(1150,HEIGHT-60,mesaj);
+    outtextxy(800,HEIGHT-60,mesaj);
 }
 
 int main()
@@ -557,7 +576,7 @@ int main()
     int mainWindow=initwindow(WIDTH,HEIGHT,"ELECTRON",0,0);
     settextstyle(DEFAULT_FONT,HORIZ_DIR,3);
     adaugareButoane();
-
+     int i, j;
     //legatura Legatura[MAX2];
     //unsigned nrLegaturi=0;
 
@@ -588,7 +607,8 @@ int main()
                 if(nrPiesaAleasa!=0)
                 {
                     prelucreaza=true;
-                    ///cout<<nrPiesaAleasa<<' '<<Piesa[nrPiesaAleasa].pLeg[1].x<<' '<<Piesa[nrPiesaAleasa].pLeg[1].y<<' '<<Piesa[nrPiesaAleasa].x<<endl;
+                    deseneaza(Piesa[nrPiesaAleasa],YELLOW); /// coloram piesa cu galben pentru a arata ca vrem sa o folosim
+                    //cout<<nrPiesaAleasa<<' '<<Piesa[nrPiesaAleasa].pLeg[1].x<<' '<<Piesa[nrPiesaAleasa].pLeg[1].y<<' '<<Piesa[nrPiesaAleasa].x<<endl;
                 }
             }
             else
@@ -598,15 +618,32 @@ int main()
                     /// dupa ce am pus o piesa pe tabla nu va aparea nimic pe INFO
                     /// odata ce am mai dat inca o data click va aparea 0 cu unitatea ei de masura
                     int xMouse=mousex();
-                    if(xMouse<350)                                                ///DELETE
+                    if(xMouse<250)                                                ///DELETE
                     {
                         deseneaza(Piesa[nrPiesaAleasa],FUNDAL);
-                        for(int i=nrPiesaAleasa; i<nrPiese; i++)
+                        if(Piesa[nrPiesaAleasa].nrLegaturi!=0)
+                        {
+                        for(i=1;i<=nrLegaturi;i++)
+                            if(Legatura[i].bloc1==nrPiesaAleasa || Legatura[i].bloc2==nrPiesaAleasa)
+                            {
+                                drawLine(Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].x,Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].y,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].x,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].y,FUNDAL);
+                                 for(j=i;j<nrLegaturi;j++)
+                                    Legatura[j]=Legatura[j+1];
+                                 nrLegaturi--;
+                                 i--;
+                            }
+
+                          for(i=1;i<=nrLegaturi;i++)
+                            drawLine(Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].x,Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].y,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].x,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].y,15-FUNDAL);
+                        }
+                        for(i=nrPiesaAleasa; i<nrPiese; i++)
                             Piesa[i]=Piesa[i+1];
                         nrPiese--;
+                        for(i=1;i<=nrPiese;i++)
+                            deseneaza(Piesa[i],15-FUNDAL);
                         //cout<<"nrPiese: "<<nrPiese<<endl;
                     }
-                    if(xMouse>=350 && xMouse<700)      ///EDITEAZA valoarea intr-o ferastra
+                    if(xMouse>=250 && xMouse<500)      ///EDITEAZA valoarea intr-o ferastra
                     {
                         newWindow(Piesa[nrPiesaAleasa],mainWindow); /// avem nevoie de mainWindow pentru a o face prioritara dupa ce am terminat cu popup window
                         /*setcolor(FUNDAL);
@@ -618,21 +655,53 @@ int main()
                          strcat(mesaj,Piesa[nrPiesaAleasa].unitate);
                          outtextxy(1150,HEIGHT-60,mesaj);*/
                     }
-                    if(xMouse>=700 && xMouse<1050)        ///ROTATE
+                    if(xMouse>=500 && xMouse<750)        ///ROTATE
                     {
+                        if(Piesa[nrPiesaAleasa].nrLegaturi!=0)
+                        {
+                        for(i=1;i<=nrLegaturi;i++)
+                            if(Legatura[i].bloc1==nrPiesaAleasa || Legatura[i].bloc2==nrPiesaAleasa)
+                                drawLine(Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].x,Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].y,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].x,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].y,FUNDAL);
+                        }
                         roteste(Piesa[nrPiesaAleasa]);
+                        if(Piesa[nrPiesaAleasa].nrLegaturi!=0)
+                        {
+                        for(i=1;i<=nrLegaturi;i++)
+                            if(Legatura[i].bloc1==nrPiesaAleasa || Legatura[i].bloc2==nrPiesaAleasa)
+                                drawLine(Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].x,Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].y,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].x,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].y,15-FUNDAL);
+                         for(i=1;i<=nrPiese;i++)
+                            deseneaza(Piesa[i],15-FUNDAL);
+                        }
                     }
-                    if(xMouse>=1050)        ///INFO
+                    if(xMouse>=750 && xMouse<1000)        ///INFO
                         valoarePiesa(Piesa[nrPiesaAleasa],mesaj);
+                    if(xMouse>=1000 && xMouse<1200)       ///ZOOM IN
+                    {
+                        deseneaza(Piesa[nrPiesaAleasa],FUNDAL);
+                        Piesa[nrPiesaAleasa].zoom++;
+                        deseneaza(Piesa[nrPiesaAleasa],WHITE);
+                    }
+                    if(xMouse>=1200 && xMouse<1400)       ///ZOOM OUT
+                    {
+                        deseneaza(Piesa[nrPiesaAleasa],FUNDAL);
+                        Piesa[nrPiesaAleasa].zoom--;
+                        deseneaza(Piesa[nrPiesaAleasa],WHITE);
+                        /// deseneaza legaturile deoarece cand micsoram se sterg capetele legaturii
+                        for(i=1; i<=nrLegaturi; i++)
+                        drawLine(Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].x,Piesa[Legatura[i].bloc1].pLeg[Legatura[i].nod1].y,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].x,Piesa[Legatura[i].bloc2].pLeg[Legatura[i].nod2].y,15-FUNDAL);
+                    }
+
                 }
+                deseneaza(Piesa[nrPiesaAleasa],WHITE);
             }
+
             valoarePiesa(Piesa[nrPiesaAleasa],mesaj);
             clearmouseclick(WM_LBUTTONDOWN);
         }
     }while (nrPiesaAleasa!=nrPieseMeniu);
     /*for(int i=1;i<=nrPiese;i++)
     cout<<Piesa[i].x<<' '<<Piesa[i].y<<' '<<Piesa[i].nume<<endl;*/
-    // getch(); 
+    // getch(); // waiting for a key press in order to delete the graph
     closegraph(mainWindow);
     return 0;
 }
